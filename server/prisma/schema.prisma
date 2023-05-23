@@ -1,0 +1,120 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  email    String?
+  username String
+  uniEmail String  @unique
+  hash     String
+
+  firstName  String
+  lastName   String
+  profilePic String?
+  coverImg   String?
+
+  university    String
+  faculty       String
+  department    String?
+  isOnline      String
+  createdGroups Group[]
+  groups        UsersOnGroups[]
+  comments      Comment[]
+  likes         Like[]
+  Sends         Message[]       @relation(name: "Sends")
+  Receives      Message[]       @relation(name: "Receives")
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  caption    String?
+  postImg    String?
+  visibility String
+  postLikes  Like[]
+  comments   Comment[]
+  group      Group     @relation(fields: [groupId], references: [id])
+  groupId    String
+
+  @@map("posts")
+}
+
+model Group {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  creator   User     @relation(fields: [creatorId], references: [id])
+  creatorId String
+
+  groupName        String
+  groupDescription String?
+  groupImage       String?
+
+  posts   Post[]
+  users   UsersOnGroups[]
+  Message Message[]
+
+  @@map("groups")
+}
+
+model UsersOnGroups {
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  group   Group  @relation(fields: [groupId], references: [id])
+  groupId String
+
+  userRole String
+
+  @@id([userId, groupId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  creator   User     @relation(fields: [creatorId], references: [id])
+  creatorId String
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    String
+  comment   String
+}
+
+model Like {
+  id        String   @default(uuid())
+  createdAt DateTime @default(now())
+  creator   User     @relation(fields: [creatorId], references: [id])
+  creatorId String
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    String
+
+  @@id([creatorId, postId])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  message String?
+  image   String?
+
+  sender   User   @relation(name: "Sends", fields: [senderId], references: [id])
+  senderId String
+
+  receiver   User   @relation("Receives", fields: [receiverId], references: [id])
+  receiverId String
+
+  chatRoom   Group?  @relation(fields: [chatRoomId], references: [id])
+  chatRoomId String?
+}
